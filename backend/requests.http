@@ -1,0 +1,72 @@
+### Extensión "REST Client" de VS Code. Ejecuta con "Send Request".
+@host = http://localhost:4000/api
+# Pega aquí el token que devuelve el login:
+@token = PEGA_AQUI_EL_TOKEN
+
+### Login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "email": "demo@turistageo.com", "password": "demo1234" }
+
+### Crear categoría
+POST {{host}}/categories
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nombre": "Playas", "descripcion": "Playas de la zona", "color": "#0ea5e9" }
+
+### Listar categorías
+GET {{host}}/categories
+Authorization: Bearer {{token}}
+
+### Crear ubicación (usa el _id de una categoría)
+POST {{host}}/locations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Playa Delfines",
+  "descripcion": "Mirador con vista al mar",
+  "categoria": "PEGA_ID_CATEGORIA",
+  "precio": "gratis",
+  "lat": 21.0580,
+  "lng": -86.7770
+}
+
+### Filtros: nombre parcial + categoría + precio
+GET {{host}}/locations?search=del&category=PEGA_ID_CATEGORIA&precio=gratis
+Authorization: Bearer {{token}}
+
+### Crear zona (polígono GeoJSON, orden [lng, lat])
+POST {{host}}/zones
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Zona Hotelera (prueba)",
+  "area": {
+    "type": "Polygon",
+    "coordinates": [[
+      [-86.80, 21.04], [-86.74, 21.04], [-86.74, 21.16], [-86.80, 21.16], [-86.80, 21.04]
+    ]]
+  }
+}
+
+### Ubicaciones dentro de una zona
+GET {{host}}/zones/PEGA_ID_ZONA/locations
+Authorization: Bearer {{token}}
+
+### Crear ruta (con ids de ubicaciones)
+POST {{host}}/routes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nombre": "Playas en un día", "descripcion": "Recorrido costero", "duracion": "6 h", "ubicaciones": ["PEGA_ID_UBICACION"] }
+
+### Crear reseña
+POST {{host}}/reviews
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "ubicacion": "PEGA_ID_UBICACION", "calificacion": 5, "comentario": "Excelente vista" }
