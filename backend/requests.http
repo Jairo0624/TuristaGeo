@@ -1,9 +1,10 @@
 ### Extensión "REST Client" de VS Code. Ejecuta con "Send Request".
 @host = http://localhost:4000/api
-# Pega aquí el token que devuelve el login:
-@token = PEGA_AQUI_EL_TOKEN
+# El token se toma solo de la respuesta del login (ejecuta primero "Login")
+@token = {{login.response.body.token}}
 
 ### Login
+# @name login
 POST {{host}}/auth/login
 Content-Type: application/json
 
