@@ -7,7 +7,7 @@ Aplicación web de **turismo en Cancún**: mapa con lugares de interés (puntos)
 
 ## Estructura
 - `backend/` API REST (Node + Express + Mongoose). **Ya funciona** (auth, CRUD, filtros, seed).
-- `frontend/` React + Vite + Leaflet (+ Leaflet-Geoman para dibujar zonas). **Por construir.**
+- `frontend/` React + Vite + Leaflet (+ Leaflet-Geoman para dibujar zonas). **Primera versión hecha, en revisión.**
 - Repositorio único y público con ambas carpetas, README y `.env.example`.
 
 ## Requisitos obligatorios de la rúbrica (si falta uno, no se revisa)
@@ -37,11 +37,13 @@ Login 10 · Registro (sin correos duplicados) 10 · 3 CRUD propios con relación
 - Variables en `backend/.env` (ver `.env.example`): `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `CLIENT_URL`, `PORT`.
 - La base de datos se llama `turistageo` dentro del Cluster0 de Atlas, que **también contiene `incidentes-georef` de otro proyecto: no tocarla**.
 
-## Frontend (por hacer) — plan
-1. Proyecto React + Vite, `VITE_API_URL` en `.env`, cliente HTTP que mande el token.
-2. Vistas: Login/Registro · Principal (mapa + tabla + filtros) · Rutas (y/o Mis favoritos).
-3. Mapa: clic → formulario → crear; popup con editar/eliminar; zonas con Leaflet-Geoman; tabla y mapa comparten estado y se actualizan sin recargar.
-4. Rutas protegidas (sin sesión no se entra a las vistas internas); mensajes visibles de éxito/error.
+## Frontend (primera versión)
+- `src/api/client.js` único cliente HTTP (token, `VITE_API_URL`, 401 → cierra sesión); `src/api/index.js` un objeto por recurso.
+- `src/utils/geo.js` es el ÚNICO lugar donde se convierte `[lat, lng]` ↔ `[lng, lat]`.
+- `context/AuthContext` (sesión) y `context/ToastContext` (mensajes de éxito/error).
+- Vistas: `AuthPage` (login/registro) · `MainPage` (filtros + `MapView` + `LocationsTable`, comparten el arreglo `locations`) · `RoutesPage` (CRUD de rutas con polilínea) · `NotFoundPage`.
+- Modales con `<dialog>` nativo (`components/Modal.jsx`); confirmación de borrado con `ConfirmDialog`.
+- Zonas: `ZoneDrawControl` (Geoman) → se pide el nombre → `POST /zones`; se eliminan desde su popup.
 
 ## Convenciones
 - Español en textos de UI, mensajes y comentarios; código y nombres técnicos en la convención ya usada.
@@ -54,4 +56,4 @@ Login 10 · Registro (sin correos duplicados) 10 · 3 CRUD propios con relación
 Los lugares/zonas del seed están en `backend/src/data/cancunData.js`. Las coordenadas de los lugares se contrastaron con fuentes públicas; los polígonos de zonas son aproximados.
 
 ## Estado actual
-Backend completo y probado en lo básico (registro/login). Falta: probar CRUD y filtros contra Atlas con `requests.http`, construir el frontend, desplegar, README final y reporte PDF.
+Backend probado contra Atlas (auth, CRUD, filtros, zonas, errores). Frontend con primera versión probada de punta a punta en navegador, pendiente de revisión del equipo. Falta: desplegar (y poner la URL del frontend en `CLIENT_URL`), README final con liga y capturas, reporte PDF.
