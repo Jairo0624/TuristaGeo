@@ -8,8 +8,12 @@ import { pointToLatLng } from '../utils/geo';
 
 const formatDate = (iso) => (iso ? new Date(iso).toLocaleDateString('es-MX', { dateStyle: 'medium' }) : '—');
 
-export default function LocationsTable({ locations, loading, onShow, onEdit, onDelete }) {
+export default function LocationsTable({ locations, loading, onShow, onEdit, onDelete, onCreate }) {
   return (
+    <>
+    <div className="table-toolbar">
+      <button type="button" className="btn btn-primary" onClick={onCreate}>+ Nuevo lugar</button>
+    </div>
     <div className="table-wrapper" role="region" aria-labelledby="tabla-lugares" tabIndex={0}>
       <table className="table">
         <caption id="tabla-lugares">
@@ -60,5 +64,6 @@ export default function LocationsTable({ locations, loading, onShow, onEdit, onD
         </tbody>
       </table>
     </div>
+    </>
   );
 }

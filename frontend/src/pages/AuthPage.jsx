@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import PinIcon from '../components/PinIcon';
 
 export default function AuthPage({ mode }) {
   const isLogin = mode === 'login';
@@ -37,7 +38,7 @@ export default function AuthPage({ mode }) {
   return (
     <div className="auth-page">
       <section className="auth-card" aria-labelledby="auth-title">
-        <p className="auth-brand"><span aria-hidden="true">◉</span> TuristaGeo · Cancún</p>
+        <p className="auth-brand"><PinIcon size={20} /> TuristaGeo · Cancún</p>
         <h1 id="auth-title">{isLogin ? 'Iniciar sesión' : 'Crear cuenta'}</h1>
         <p className="muted">
           {isLogin ? 'Explora playas, cultura y rutas de Cancún en el mapa.' : 'Regístrate para guardar lugares, zonas y rutas.'}

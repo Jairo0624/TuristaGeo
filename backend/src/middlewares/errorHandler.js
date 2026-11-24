@@ -18,6 +18,10 @@ function normalize(err) {
   if (err.type === 'entity.parse.failed') {
     return new AppError('El cuerpo de la petición no es un JSON válido', 400);
   }
+  // MongoDB rechaza polígonos que se cruzan a sí mismos (índice 2dsphere): es un error del usuario, no del servidor
+  if (err.code === 16755 || /Can't extract geo keys|Loop is not valid|Edges? .* cross/i.test(err.message || '')) {
+    return new AppError('El polígono no es válido: sus lados no pueden cruzarse. Dibújalo de nuevo.', 400);
+  }
   return err;
 }
 

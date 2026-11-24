@@ -8,10 +8,17 @@ import { categoryColor, markerIcon } from '../utils/markerIcon';
 import { PRECIOS, precioLabel } from '../utils/constants';
 
 // Clic en el mapa (ignorado mientras se dibuja una zona)
-function ClickHandler({ onMapClick }) {
+function ClickHandler({ onMapClick, picking }) {
+  const closedAt = useRef(0);
   const map = useMapEvents({
+    popupclose() {
+      closedAt.current = performance.now();
+    },
     click(e) {
       if (map.pm?.globalDrawModeEnabled()) return;
+      // El clic que solo cierra un popup abierto no debe abrir el formulario de nuevo lugar
+      // (salvo al elegir coordenadas: ahí todo clic cuenta)
+      if (!picking && performance.now() - closedAt.current < 150) return;
       onMapClick(e.latlng);
     },
   });
@@ -30,6 +37,11 @@ function FocusOnLocation({ focus, markerRefs }) {
   }, [focus, map, markerRefs]);
   return null;
 }
+
+// Leaflet decide si un clic vino de un popup mirando los padres del elemento clicado. Si React ya quitó ese
+// elemento del DOM (p. ej. el botón "Editar" que se reemplaza por un formulario), Leaflet lo toma como clic
+// en el mapa: cierra el popup y abre "nuevo lugar". Frenar el clic aquí evita que llegue al mapa.
+const stopMapClick = (e) => e.stopPropagation();
 
 // Contenido del popup de un lugar. Con "Editar" el mismo popup se convierte en un formulario
 // (se edita ahí mismo, sin abrir otra ventana). `onSave(lugar, datos)` guarda en el backend.
@@ -68,7 +80,7 @@ function LocationPopup({ location, categories, onSave, onDelete }) {
 
   if (editing) {
     return (
-      <form className="popup popup-form" onSubmit={submit}>
+      <form className="popup popup-form" onSubmit={submit} onClick={stopMapClick}>
         <h3>Editar lugar</h3>
         <label>
           Nombre *
@@ -107,7 +119,7 @@ function LocationPopup({ location, categories, onSave, onDelete }) {
   }
 
   return (
-    <div className="popup">
+    <div className="popup" onClick={stopMapClick}>
       <h3>{location.nombre}</h3>
       <p className="popup-meta">
         <span className="dot" style={{ background: categoryColor(location.categoria) }} aria-hidden="true" />
@@ -126,13 +138,16 @@ function LocationPopup({ location, categories, onSave, onDelete }) {
   );
 }
 
-function ZonePopup({ zone, onFilterZone, onDeleteZone }) {
+function ZonePopup({ zone, onCreateHere, onFilterZone, onDeleteZone }) {
   const map = useMap();
   return (
-    <div className="popup">
+    <div className="popup" onClick={stopMapClick}>
       <h3>{zone.nombre}</h3>
       <p className="popup-meta">Zona · creada por {zone.creadoPor?.nombre || '—'}</p>
       <div className="popup-actions">
+        <button type="button" className="btn btn-small btn-primary" onClick={() => { map.closePopup(); onCreateHere(); }}>
+          Registrar lugar aquí
+        </button>
         <button type="button" className="btn btn-small" onClick={() => { map.closePopup(); onFilterZone(zone); }}>
           Ver lugares aquí
         </button>
@@ -145,14 +160,16 @@ function ZonePopup({ zone, onFilterZone, onDeleteZone }) {
 }
 
 export default function MapView({
-  locations, zones, categories, focus, activeZoneId,
+  locations, zones, categories, focus, activeZoneId, picking,
   onMapClick, onSave, onDelete, onZoneDrawn, onFilterZone, onDeleteZone,
 }) {
   // Referencias a los marcadores por id, para abrir su popup desde la tabla
   const markerRefs = useRef(new Map());
+  // Punto exacto donde se hizo clic dentro de una zona (el polígono atrapa el clic, así que se guarda aquí)
+  const zoneClick = useRef(null);
 
   return (
-    <MapContainer center={CANCUN_CENTER} zoom={CANCUN_ZOOM} className="map" scrollWheelZoom>
+    <MapContainer center={CANCUN_CENTER} zoom={CANCUN_ZOOM} className={picking ? 'map map-picking' : 'map'} scrollWheelZoom>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -160,7 +177,10 @@ export default function MapView({
 
       {zones.map((zone) => (
         <Polygon
-          key={zone._id}
+          // Al elegir coordenadas las zonas dejan de ser clicables para no estorbar (la key las recrea)
+          key={`${zone._id}-${picking ? 'pick' : 'view'}`}
+          interactive={!picking}
+          eventHandlers={{ click: (e) => { zoneClick.current = e.latlng; } }}
           positions={polygonToLatLngs(zone.area)}
           pathOptions={{
             color: zone._id === activeZoneId ? '#f97316' : '#0f766e',
@@ -169,7 +189,12 @@ export default function MapView({
           }}
         >
           <Popup>
-            <ZonePopup zone={zone} onFilterZone={onFilterZone} onDeleteZone={onDeleteZone} />
+            <ZonePopup
+              zone={zone}
+              onCreateHere={() => zoneClick.current && onMapClick(zoneClick.current)}
+              onFilterZone={onFilterZone}
+              onDeleteZone={onDeleteZone}
+            />
           </Popup>
         </Polygon>
       ))}
@@ -189,7 +214,7 @@ export default function MapView({
         </Marker>
       ))}
 
-      <ClickHandler onMapClick={onMapClick} />
+      <ClickHandler onMapClick={onMapClick} picking={picking} />
       <ZoneDrawControl onDrawn={onZoneDrawn} />
       <FocusOnLocation focus={focus} markerRefs={markerRefs} />
     </MapContainer>

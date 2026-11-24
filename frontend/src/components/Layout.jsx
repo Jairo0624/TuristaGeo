@@ -2,6 +2,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import PinIcon from './PinIcon';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -18,7 +19,7 @@ export default function Layout() {
     <div className="app">
       <header className="navbar">
         <NavLink to="/" className="brand">
-          <span className="brand-mark" aria-hidden="true">◉</span> TuristaGeo
+          <PinIcon /> TuristaGeo
         </NavLink>
         <nav aria-label="Principal">
           <NavLink to="/" end>Mapa</NavLink>

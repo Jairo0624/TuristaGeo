@@ -14,6 +14,13 @@ import { latLngsToPolygon, pointToLatLng } from '../utils/geo';
 import { useToast } from '../context/ToastContext';
 
 const EMPTY_FILTERS = { category: '', precio: '', zona: '' };
+// Si un filtro activo esconde el lugar recién guardado, se avisa para que no parezca que no se guardó
+const withHiddenNote = (msg, saved, list) =>
+  list && saved?._id && !list.some((l) => l._id === saved._id)
+    ? `${msg}, pero los filtros activos lo ocultan. Pulsa "Limpiar" para verlo.`
+    : msg;
+
+const BLANK_PLACE = { nombre: '', descripcion: '', categoria: '', precio: 'medio', lat: '', lng: '' };
 
 export default function MainPage() {
   const toast = useToast();
@@ -29,7 +36,12 @@ export default function MainPage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
 
   // Ventanas: formulario de lugar, nombre de zona y confirmación de borrado
-  const [locationDraft, setLocationDraft] = useState(null); // { location? , lat, lng }
+  const [locationDraft, setLocationDraft] = useState(null); // { location?, nombre, descripcion, categoria, precio, lat, lng }
+  // Modo "elegir en el mapa": la ventana se oculta y el siguiente clic en el mapa fija las coordenadas.
+  // pickingRef existe para que el cierre del modal (evento close) sepa que NO debe descartar el borrador.
+  const [picking, setPicking] = useState(false);
+  const pickingRef = useRef(false);
+  const mapWrapRef = useRef(null);
   const [zoneDraft, setZoneDraft] = useState(null); // vértices dibujados
   const [confirm, setConfirm] = useState(null);
   const [focus, setFocus] = useState(null); // lugar a enfocar en el mapa
@@ -54,12 +66,16 @@ export default function MainPage() {
     setLoading(true);
     try {
       const data = await locationsApi.list({ search, ...filters });
-      if (id === requestId.current) setLocations(data);
+      if (id === requestId.current) {
+        setLocations(data);
+        return data;
+      }
     } catch (e) {
       if (id === requestId.current) toast.error(e.message);
     } finally {
       if (id === requestId.current) setLoading(false);
     }
+    return null;
   }, [search, filters, toast]);
 
   useEffect(() => {
@@ -67,12 +83,45 @@ export default function MainPage() {
   }, [reloadLocations]);
 
   // --- Lugares: crear / editar / eliminar
-  const openCreate = useCallback((latlng) => setLocationDraft({ lat: latlng.lat, lng: latlng.lng }), []);
+  // Con coordenadas (clic en el mapa o en una zona) o en blanco (botón de la tabla)
+  const openCreate = useCallback((latlng) => setLocationDraft({ ...BLANK_PLACE, lat: latlng.lat, lng: latlng.lng }), []);
+  const openCreateBlank = useCallback(() => setLocationDraft({ ...BLANK_PLACE }), []);
 
   const openEdit = useCallback((loc) => {
     const [lat, lng] = pointToLatLng(loc.ubicacion);
-    setLocationDraft({ location: loc, lat, lng });
+    setLocationDraft({
+      location: loc,
+      nombre: loc.nombre,
+      descripcion: loc.descripcion || '',
+      categoria: loc.categoria?._id || '',
+      precio: loc.precio || 'medio',
+      lat,
+      lng,
+    });
   }, []);
+
+  // --- Elegir coordenadas en el mapa sin perder lo que ya se escribió en el formulario
+  const startPick = (form) => {
+    pickingRef.current = true;
+    setLocationDraft((d) => ({ ...d, ...form }));
+    setPicking(true);
+    mapWrapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const stopPick = () => {
+    pickingRef.current = false;
+    setPicking(false);
+  };
+
+  // Un solo manejador para los clics del mapa: o fija coordenadas, o abre el formulario de nuevo lugar
+  const handleMapClick = (latlng) => {
+    if (pickingRef.current) {
+      setLocationDraft((d) => ({ ...d, lat: latlng.lat, lng: latlng.lng }));
+      stopPick();
+    } else {
+      openCreate(latlng);
+    }
+  };
 
   const saveLocation = async (form) => {
     const datos = {
@@ -84,24 +133,23 @@ export default function MainPage() {
       lng: form.lng,
     };
     const editing = locationDraft.location;
-    if (editing) await locationsApi.update(editing._id, datos);
-    else await locationsApi.create(datos);
+    const saved = editing ? await locationsApi.update(editing._id, datos) : await locationsApi.create(datos);
     setLocationDraft(null);
-    toast.success(editing ? 'Lugar actualizado' : 'Lugar registrado');
     // Se vuelve a pedir la lista con los mismos filtros: así mapa y tabla quedan iguales al backend
-    await reloadLocations();
+    const list = await reloadLocations();
+    toast.success(withHiddenNote(editing ? 'Lugar actualizado' : 'Lugar registrado', saved, list));
   };
 
   // Edición dentro del popup del mapa: solo cambia los datos del formulario (no las coordenadas)
   const saveLocationInline = useCallback(async (loc, form) => {
-    await locationsApi.update(loc._id, {
+    const saved = await locationsApi.update(loc._id, {
       nombre: form.nombre,
       descripcion: form.descripcion,
       categoria: form.categoria,
       precio: form.precio,
     });
-    toast.success('Lugar actualizado');
-    await reloadLocations();
+    const list = await reloadLocations();
+    toast.success(withHiddenNote('Lugar actualizado', saved, list));
   }, [reloadLocations, toast]);
 
   const askDeleteLocation = useCallback((loc) => {
@@ -156,22 +204,13 @@ export default function MainPage() {
     setFilters(EMPTY_FILTERS);
   };
 
-  const draftInitial = locationDraft && {
-    nombre: locationDraft.location?.nombre || '',
-    descripcion: locationDraft.location?.descripcion || '',
-    categoria: locationDraft.location?.categoria?._id || '',
-    precio: locationDraft.location?.precio || 'medio',
-    lat: locationDraft.lat,
-    lng: locationDraft.lng,
-  };
-
   return (
     <div className="main-page">
       <div className="page-head">
         <h1>Mapa turístico de Cancún</h1>
         <p className="muted">
-          Haz <strong>clic en el mapa</strong> para registrar un lugar. Usa los botones de la izquierda del mapa para
-          <strong> dibujar una zona</strong>.
+          Haz <strong>clic en el mapa</strong> (o en una zona, con <em>Registrar lugar aquí</em>) para registrar un lugar.
+          Usa los botones de la izquierda del mapa para <strong>dibujar una zona</strong>.
         </p>
       </div>
 
@@ -185,19 +224,29 @@ export default function MainPage() {
         onClear={clearFilters}
       />
 
+      {picking && (
+        <div className="pick-banner" role="status">
+          <span>📍 Haz clic en el mapa para elegir la ubicación del lugar.</span>
+          <button type="button" className="btn btn-small" onClick={stopPick}>Cancelar</button>
+        </div>
+      )}
+
+      <div ref={mapWrapRef}>
       <MapView
+        picking={picking}
         locations={locations}
         zones={zones}
         focus={focus}
         activeZoneId={filters.zona}
         categories={categories}
-        onMapClick={openCreate}
+        onMapClick={handleMapClick}
         onSave={saveLocationInline}
         onDelete={askDeleteLocation}
         onZoneDrawn={onZoneDrawn}
         onFilterZone={filterByZone}
         onDeleteZone={askDeleteZone}
       />
+      </div>
 
       <ul className="legend" aria-label="Categorías">
         {categories.map((c) => (
@@ -214,19 +263,24 @@ export default function MainPage() {
         onShow={(loc) => setFocus({ id: loc._id, t: Date.now() })}
         onEdit={openEdit}
         onDelete={askDeleteLocation}
+        onCreate={openCreateBlank}
       />
 
       <Modal
-        open={Boolean(locationDraft)}
+        open={Boolean(locationDraft) && !picking}
         title={locationDraft?.location ? 'Editar lugar' : 'Registrar lugar'}
-        onClose={() => setLocationDraft(null)}
+        onClose={() => {
+          // Mientras se elige en el mapa el modal se cierra, pero el borrador se conserva
+          if (!pickingRef.current) setLocationDraft(null);
+        }}
       >
-        {draftInitial && (
+        {locationDraft && (
           <LocationForm
-            initial={draftInitial}
+            initial={locationDraft}
             categories={categories}
             onSubmit={saveLocation}
             onCancel={() => setLocationDraft(null)}
+            onPickOnMap={startPick}
             submitLabel={locationDraft.location ? 'Guardar cambios' : 'Registrar'}
           />
         )}

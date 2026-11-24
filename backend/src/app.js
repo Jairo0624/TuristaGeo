@@ -5,7 +5,11 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
+// CLIENT_URL acepta uno o varios orígenes separados por coma (ej. el puerto de Vite puede cambiar)
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((o) => o.trim()).filter(Boolean)
+  : '*';
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 app.get('/api/health', (req, res) => res.status(200).json({ ok: true, message: 'TuristaGeo API funcionando' }));

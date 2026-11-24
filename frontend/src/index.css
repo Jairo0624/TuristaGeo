@@ -107,7 +107,7 @@ input:user-invalid, select:user-invalid { border-color: var(--error-text); }
   width: min(100%, 26rem); padding: 2rem; border-radius: 16px;
   background: var(--surface); box-shadow: var(--shadow);
 }
-.auth-brand { margin: 0 0 1rem; color: var(--primary); font-weight: 700; }
+.auth-brand { margin: 0 0 1rem; color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 0.35rem; }
 .auth-card .btn-primary { width: 100%; }
 .auth-switch { margin: 1.2rem 0 0.3rem; text-align: center; }
 
@@ -117,7 +117,7 @@ input:user-invalid, select:user-invalid { border-color: var(--error-text); }
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem;
   padding: 0.6rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border);
 }
-.brand { color: var(--primary); font-weight: 800; font-size: 1.15rem; text-decoration: none; }
+.brand { color: var(--primary); font-weight: 800; font-size: 1.15rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
 .navbar nav { display: flex; gap: 0.25rem; }
 .navbar nav a {
   padding: 0.4rem 0.8rem; border-radius: 8px; color: var(--text);
@@ -270,3 +270,15 @@ input:user-invalid, select:user-invalid { border-color: var(--error-text); }
 .swatch { display: inline-block; width: 1rem; height: 1rem; margin-right: 0.5rem; border-radius: 4px; vertical-align: middle; border: 1px solid var(--border); }
 .stars { color: #d97706; letter-spacing: 0.05em; white-space: nowrap; }
 .cell-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* --- Crear lugar desde la tabla / elegir coordenadas en el mapa --- */
+.table-toolbar { display: flex; justify-content: flex-end; margin: 1rem 0 0.5rem; }
+.pick-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  margin: 0 0 0.6rem; padding: 0.6rem 0.9rem;
+  border: 2px solid var(--primary); border-radius: 10px; background: var(--surface); font-weight: 600;
+}
+.map-picking, .map-picking .leaflet-interactive, .map-picking .leaflet-grab { cursor: crosshair; }
+.coords-fieldset { border: 1px solid var(--border, #d1d5db); border-radius: 10px; padding: 0.6rem 0.9rem 0.9rem; display: grid; gap: 0.7rem; }
+.coords-fieldset legend { font-weight: 600; font-size: 0.92rem; padding: 0 0.3rem; }
+.coords-fieldset .btn { justify-self: start; }

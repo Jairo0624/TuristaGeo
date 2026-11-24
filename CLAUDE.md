@@ -41,7 +41,10 @@ Login 10 · Registro (sin correos duplicados) 10 · 3 CRUD propios con relación
 - `src/api/client.js` único cliente HTTP (token, `VITE_API_URL`, 401 → cierra sesión); `src/api/index.js` un objeto por recurso.
 - `src/utils/geo.js` es el ÚNICO lugar donde se convierte `[lat, lng]` ↔ `[lng, lat]`.
 - `context/AuthContext` (sesión) y `context/ToastContext` (mensajes de éxito/error).
-- Vistas: `AuthPage` (login/registro) · `MainPage` (filtros + `MapView` + `LocationsTable`, comparten el arreglo `locations`) · `RoutesPage` (CRUD de rutas con polilínea) · `NotFoundPage`.
+- Vistas: `AuthPage` (login/registro) · `MainPage` (filtros + `MapView` + `LocationsTable`, comparten el arreglo `locations`) · `RoutesPage` (CRUD de rutas con polilínea) · `CategoriesPage` (CRUD de categorías) · `ReviewsPage` (CRUD de reseñas, filtro por lugar con `?ubicacion=`) · `NotFoundPage`.
+- Los 3 CRUD propios de la rúbrica son rutas, categorías y reseñas (los tres con interfaz completa).
+- Los lugares se editan **dentro del popup del mapa** (el popup se vuelve formulario); la tabla también tiene su botón Editar (abre un modal).
+- La tabla de lugares muestra todo salvo el ID: nombre, categoría (por nombre), precio, descripción, latitud, longitud, registrado por y fecha.
 - Modales con `<dialog>` nativo (`components/Modal.jsx`); confirmación de borrado con `ConfirmDialog`.
 - Zonas: `ZoneDrawControl` (Geoman) → se pide el nombre → `POST /zones`; se eliminan desde su popup.
 
@@ -56,4 +59,4 @@ Login 10 · Registro (sin correos duplicados) 10 · 3 CRUD propios con relación
 Los lugares/zonas del seed están en `backend/src/data/cancunData.js`. Las coordenadas de los lugares se contrastaron con fuentes públicas; los polígonos de zonas son aproximados.
 
 ## Estado actual
-Backend probado contra Atlas (auth, CRUD, filtros, zonas, errores). Frontend con primera versión probada de punta a punta en navegador, pendiente de revisión del equipo. Falta: desplegar (y poner la URL del frontend en `CLIENT_URL`), README final con liga y capturas, reporte PDF.
+Backend probado contra Atlas. Frontend con las 5 vistas internas (mapa, rutas, categorías, reseñas) y edición en popup; los cambios de categorías, reseñas, columnas de coordenadas y popup se revisaron solo por sintaxis/imports: **falta probarlos en el navegador y correr `npm run build` y `npm run lint`**. Falta: desplegar (y poner la URL del frontend en `CLIENT_URL`), README final con liga y capturas, reporte PDF.
