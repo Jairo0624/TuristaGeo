@@ -92,6 +92,18 @@ export default function MainPage() {
     await reloadLocations();
   };
 
+  // Edición dentro del popup del mapa: solo cambia los datos del formulario (no las coordenadas)
+  const saveLocationInline = useCallback(async (loc, form) => {
+    await locationsApi.update(loc._id, {
+      nombre: form.nombre,
+      descripcion: form.descripcion,
+      categoria: form.categoria,
+      precio: form.precio,
+    });
+    toast.success('Lugar actualizado');
+    await reloadLocations();
+  }, [reloadLocations, toast]);
+
   const askDeleteLocation = useCallback((loc) => {
     setConfirm({
       title: 'Eliminar lugar',
@@ -178,8 +190,9 @@ export default function MainPage() {
         zones={zones}
         focus={focus}
         activeZoneId={filters.zona}
+        categories={categories}
         onMapClick={openCreate}
-        onEdit={openEdit}
+        onSave={saveLocationInline}
         onDelete={askDeleteLocation}
         onZoneDrawn={onZoneDrawn}
         onFilterZone={filterByZone}

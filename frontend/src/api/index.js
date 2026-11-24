@@ -9,6 +9,9 @@ export const authApi = {
 
 export const categoriesApi = {
   list: () => api('/categories').then((r) => r.data),
+  create: (datos) => api('/categories', { method: 'POST', body: datos }).then((r) => r.data),
+  update: (id, datos) => api(`/categories/${id}`, { method: 'PUT', body: datos }).then((r) => r.data),
+  remove: (id) => api(`/categories/${id}`, { method: 'DELETE' }),
 };
 
 export const locationsApi = {
@@ -30,4 +33,12 @@ export const routesApi = {
   create: (datos) => api('/routes', { method: 'POST', body: datos }).then((r) => r.data),
   update: (id, datos) => api(`/routes/${id}`, { method: 'PUT', body: datos }).then((r) => r.data),
   remove: (id) => api(`/routes/${id}`, { method: 'DELETE' }),
+};
+
+export const reviewsApi = {
+  // filtros: { ubicacion } → solo las reseñas de un lugar
+  list: (filtros) => api('/reviews', { params: filtros }).then((r) => r.data),
+  create: (datos) => api('/reviews', { method: 'POST', body: datos }).then((r) => r.data),
+  update: (id, datos) => api(`/reviews/${id}`, { method: 'PUT', body: datos }).then((r) => r.data),
+  remove: (id) => api(`/reviews/${id}`, { method: 'DELETE' }),
 };

@@ -5,6 +5,8 @@ import Layout from './components/Layout';
 import AuthPage from './pages/AuthPage';
 import MainPage from './pages/MainPage';
 import RoutesPage from './pages/RoutesPage';
+import CategoriesPage from './pages/CategoriesPage';
+import ReviewsPage from './pages/ReviewsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { useAuth } from './context/AuthContext';
 
@@ -21,6 +23,8 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<MainPage />} />
           <Route path="/rutas" element={<RoutesPage />} />
+          <Route path="/categorias" element={<CategoriesPage />} />
+          <Route path="/resenas" element={<ReviewsPage />} />
         </Route>
       </Route>
 

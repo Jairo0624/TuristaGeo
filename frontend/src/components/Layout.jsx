@@ -23,6 +23,8 @@ export default function Layout() {
         <nav aria-label="Principal">
           <NavLink to="/" end>Mapa</NavLink>
           <NavLink to="/rutas">Rutas</NavLink>
+          <NavLink to="/categorias">Categorías</NavLink>
+          <NavLink to="/resenas">Reseñas</NavLink>
         </nav>
         <div className="navbar-user">
           <span className="user-name">{user.nombre}</span>

@@ -1,11 +1,11 @@
 // Mapa de la vista principal: lugares (marcadores), zonas (polígonos),
 // clic para registrar un lugar y herramientas para dibujar zonas.
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, Marker, Polygon, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import ZoneDrawControl from './ZoneDrawControl';
 import { CANCUN_CENTER, CANCUN_ZOOM, pointToLatLng, polygonToLatLngs } from '../utils/geo';
 import { categoryColor, markerIcon } from '../utils/markerIcon';
-import { precioLabel } from '../utils/constants';
+import { PRECIOS, precioLabel } from '../utils/constants';
 
 // Clic en el mapa (ignorado mientras se dibuja una zona)
 function ClickHandler({ onMapClick }) {
@@ -31,9 +31,81 @@ function FocusOnLocation({ focus, markerRefs }) {
   return null;
 }
 
-// Contenido del popup de un lugar, con los botones Editar y Eliminar
-function LocationPopup({ location, onEdit, onDelete }) {
+// Contenido del popup de un lugar. Con "Editar" el mismo popup se convierte en un formulario
+// (se edita ahí mismo, sin abrir otra ventana). `onSave(lugar, datos)` guarda en el backend.
+function LocationPopup({ location, categories, onSave, onDelete }) {
   const map = useMap();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(null);
+  const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const startEdit = () => {
+    setForm({
+      nombre: location.nombre,
+      descripcion: location.descripcion || '',
+      categoria: location.categoria?._id || '',
+      precio: location.precio,
+    });
+    setError('');
+    setSending(false);
+    setEditing(true);
+  };
+
+  const change = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSending(true);
+    try {
+      await onSave(location, { ...form, nombre: form.nombre.trim() });
+    } catch (err) {
+      setError(err.message);
+      setSending(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <form className="popup popup-form" onSubmit={submit}>
+        <h3>Editar lugar</h3>
+        <label>
+          Nombre *
+          <input name="nombre" value={form.nombre} onChange={change} required maxLength={100} autoFocus />
+        </label>
+        <label>
+          Descripción
+          <textarea name="descripcion" value={form.descripcion} onChange={change} rows={2} maxLength={500} />
+        </label>
+        <label>
+          Categoría *
+          <select name="categoria" value={form.categoria} onChange={change} required>
+            <option value="" disabled>Elige una…</option>
+            {categories.map((c) => (
+              <option key={c._id} value={c._id}>{c.nombre}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Precio
+          <select name="precio" value={form.precio} onChange={change}>
+            {PRECIOS.map((p) => (
+              <option key={p.value} value={p.value}>{p.label}</option>
+            ))}
+          </select>
+        </label>
+        {error && <p className="popup-error" role="alert">{error}</p>}
+        <div className="popup-actions">
+          <button type="button" className="btn btn-small" onClick={() => setEditing(false)}>Cancelar</button>
+          <button type="submit" className="btn btn-small btn-primary" disabled={sending}>
+            {sending ? 'Guardando…' : 'Guardar'}
+          </button>
+        </div>
+      </form>
+    );
+  }
+
   return (
     <div className="popup">
       <h3>{location.nombre}</h3>
@@ -43,7 +115,7 @@ function LocationPopup({ location, onEdit, onDelete }) {
       </p>
       {location.descripcion && <p>{location.descripcion}</p>}
       <div className="popup-actions">
-        <button type="button" className="btn btn-small" onClick={() => { map.closePopup(); onEdit(location); }}>
+        <button type="button" className="btn btn-small" onClick={startEdit}>
           Editar
         </button>
         <button type="button" className="btn btn-small btn-danger" onClick={() => { map.closePopup(); onDelete(location); }}>
@@ -73,8 +145,8 @@ function ZonePopup({ zone, onFilterZone, onDeleteZone }) {
 }
 
 export default function MapView({
-  locations, zones, focus, activeZoneId,
-  onMapClick, onEdit, onDelete, onZoneDrawn, onFilterZone, onDeleteZone,
+  locations, zones, categories, focus, activeZoneId,
+  onMapClick, onSave, onDelete, onZoneDrawn, onFilterZone, onDeleteZone,
 }) {
   // Referencias a los marcadores por id, para abrir su popup desde la tabla
   const markerRefs = useRef(new Map());
@@ -112,7 +184,7 @@ export default function MapView({
           ref={(m) => (m ? markerRefs.current.set(loc._id, m) : markerRefs.current.delete(loc._id))}
         >
           <Popup>
-            <LocationPopup location={loc} onEdit={onEdit} onDelete={onDelete} />
+            <LocationPopup location={loc} categories={categories} onSave={onSave} onDelete={onDelete} />
           </Popup>
         </Marker>
       ))}

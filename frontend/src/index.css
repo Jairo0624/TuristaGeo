@@ -251,3 +251,22 @@ input:user-invalid, select:user-invalid { border-color: var(--error-text); }
   .user-name { display: none; }
   h1 { font-size: 1.3rem; }
 }
+
+/* ===== Edición dentro del popup del mapa ===== */
+.popup-form { display: grid; gap: 0.5rem; min-width: 230px; }
+.popup-form label { display: grid; gap: 0.2rem; font-weight: 600; font-size: 0.85rem; }
+.popup input, .popup select, .popup textarea {
+  min-height: 2rem; padding: 0.25rem 0.5rem; font-size: 0.9rem;
+  background: #fff; color: #102a2c; border-color: #d5e0e0;
+}
+.popup .btn-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+.popup-error { margin: 0; padding: 0.4rem 0.6rem; border-radius: 6px; background: #fff1ea; color: #b42318; font-weight: 600; font-size: 0.85rem; }
+
+/* ===== Vistas de categorías y reseñas ===== */
+.crud-page { display: grid; gap: 0.9rem; }
+.crud-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.6rem; }
+.crud-head p { margin: 0; }
+.filters-simple { grid-template-columns: minmax(200px, 360px) auto; }
+.swatch { display: inline-block; width: 1rem; height: 1rem; margin-right: 0.5rem; border-radius: 4px; vertical-align: middle; border: 1px solid var(--border); }
+.stars { color: #d97706; letter-spacing: 0.05em; white-space: nowrap; }
+.cell-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
