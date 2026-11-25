@@ -1,7 +1,8 @@
 // Cliente HTTP único de la app: agrega el token, arma la URL y convierte
 // las respuestas del backend ({ ok, data } o { ok: false, message }) en datos o errores.
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+// Se quitan las barras finales para que "…/api/" y "…/api" funcionen igual (evita /api//auth/login)
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/+$/, '');
 const TOKEN_KEY = 'turistageo_token';
 
 // localStorage puede fallar (modo privado, bloqueado), por eso va en try/catch
