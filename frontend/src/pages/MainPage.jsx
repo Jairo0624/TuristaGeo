@@ -12,6 +12,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { categoriesApi, locationsApi, zonesApi } from '../api';
 import { latLngsToPolygon, pointToLatLng } from '../utils/geo';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY_FILTERS = { category: '', precio: '', zona: '' };
 // Si un filtro activo esconde el lugar recién guardado, se avisa para que no parezca que no se guardó
@@ -24,6 +25,9 @@ const BLANK_PLACE = { nombre: '', descripcion: '', categoria: '', precio: 'medio
 
 export default function MainPage() {
   const toast = useToast();
+  const { user } = useAuth();
+  // El backend es quien lo exige (403); aquí solo se ocultan los botones que no corresponden
+  const canModify = useCallback((loc) => loc.creadoPor?._id === user?.id, [user]);
 
   const [categories, setCategories] = useState([]);
   const [zones, setZones] = useState([]);
@@ -242,6 +246,7 @@ export default function MainPage() {
         onMapClick={handleMapClick}
         onSave={saveLocationInline}
         onDelete={askDeleteLocation}
+        canModify={canModify}
         onZoneDrawn={onZoneDrawn}
         onFilterZone={filterByZone}
         onDeleteZone={askDeleteZone}
@@ -264,6 +269,7 @@ export default function MainPage() {
         onEdit={openEdit}
         onDelete={askDeleteLocation}
         onCreate={openCreateBlank}
+        canModify={canModify}
       />
 
       <Modal

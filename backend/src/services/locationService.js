@@ -6,8 +6,10 @@ const Review = require('../models/Review');
 const Route = require('../models/Route');
 const AppError = require('../utils/AppError');
 const { toPoint, escapeRegex } = require('../utils/geo');
+const { ensureOwner } = require('../utils/ownership');
 
 const PRECIOS = ['gratis', 'bajo', 'medio', 'alto'];
+const MSG_OWNER = 'Solo quien registró este lugar puede modificarlo o eliminarlo';
 const populate = [
   { path: 'categoria', select: 'nombre color' },
   { path: 'creadoPor', select: 'nombre' },
@@ -63,9 +65,10 @@ exports.create = async (body, userId) => {
   return Location.findById(loc._id).populate(populate);
 };
 
-exports.update = async (id, body) => {
+exports.update = async (id, body, userId) => {
   const loc = await Location.findById(id);
   if (!loc) throw new AppError('Ubicación no encontrada', 404);
+  ensureOwner(loc.creadoPor, userId, MSG_OWNER);
 
   ['nombre', 'descripcion', 'precio'].forEach((k) => {
     if (body[k] !== undefined) loc[k] = body[k];
@@ -81,9 +84,11 @@ exports.update = async (id, body) => {
   return Location.findById(id).populate(populate);
 };
 
-exports.remove = async (id) => {
-  const loc = await Location.findByIdAndDelete(id);
+exports.remove = async (id, userId) => {
+  const loc = await Location.findById(id);
   if (!loc) throw new AppError('Ubicación no encontrada', 404);
+  ensureOwner(loc.creadoPor, userId, MSG_OWNER);
+  await loc.deleteOne();
   // Limpieza de referencias
   await Review.deleteMany({ ubicacion: id });
   await Route.updateMany({ ubicaciones: id }, { $pull: { ubicaciones: id } });

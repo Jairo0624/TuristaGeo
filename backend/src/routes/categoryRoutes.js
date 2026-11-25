@@ -16,15 +16,15 @@ router.get('/:id', validateId, catchAsync(async (req, res) => {
 }));
 
 router.post('/', validateCategory, catchAsync(async (req, res) => {
-  res.status(201).json({ ok: true, data: await svc.create(req.body) });
+  res.status(201).json({ ok: true, data: await svc.create(req.body, req.user._id) });
 }));
 
 router.put('/:id', validateId, validateCategory, catchAsync(async (req, res) => {
-  res.status(200).json({ ok: true, data: await svc.update(req.params.id, req.body) });
+  res.status(200).json({ ok: true, data: await svc.update(req.params.id, req.body, req.user._id) });
 }));
 
 router.delete('/:id', validateId, catchAsync(async (req, res) => {
-  await svc.remove(req.params.id);
+  await svc.remove(req.params.id, req.user._id);
   res.status(200).json({ ok: true, message: 'Categoría eliminada' });
 }));
 

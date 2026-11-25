@@ -8,7 +8,7 @@ import { pointToLatLng } from '../utils/geo';
 
 const formatDate = (iso) => (iso ? new Date(iso).toLocaleDateString('es-MX', { dateStyle: 'medium' }) : '—');
 
-export default function LocationsTable({ locations, loading, onShow, onEdit, onDelete, onCreate }) {
+export default function LocationsTable({ locations, loading, onShow, onEdit, onDelete, onCreate, canModify }) {
   return (
     <>
     <div className="table-toolbar">
@@ -55,8 +55,12 @@ export default function LocationsTable({ locations, loading, onShow, onEdit, onD
                 <td data-label="Fecha">{formatDate(loc.createdAt)}</td>
                 <td className="cell-actions">
                   <button type="button" className="btn btn-small" onClick={() => onShow(loc)}>Ver en mapa</button>
-                  <button type="button" className="btn btn-small" onClick={() => onEdit(loc)}>Editar</button>
-                  <button type="button" className="btn btn-small btn-danger" onClick={() => onDelete(loc)}>Eliminar</button>
+                  {canModify(loc) && (
+                    <>
+                      <button type="button" className="btn btn-small" onClick={() => onEdit(loc)}>Editar</button>
+                      <button type="button" className="btn btn-small btn-danger" onClick={() => onDelete(loc)}>Eliminar</button>
+                    </>
+                  )}
                 </td>
               </tr>
             );

@@ -45,7 +45,7 @@ const stopMapClick = (e) => e.stopPropagation();
 
 // Contenido del popup de un lugar. Con "Editar" el mismo popup se convierte en un formulario
 // (se edita ahí mismo, sin abrir otra ventana). `onSave(lugar, datos)` guarda en el backend.
-function LocationPopup({ location, categories, onSave, onDelete }) {
+function LocationPopup({ location, categories, canModify, onSave, onDelete }) {
   const map = useMap();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
@@ -126,14 +126,18 @@ function LocationPopup({ location, categories, onSave, onDelete }) {
         {location.categoria?.nombre || 'Sin categoría'} · {precioLabel(location.precio)}
       </p>
       {location.descripcion && <p>{location.descripcion}</p>}
-      <div className="popup-actions">
-        <button type="button" className="btn btn-small" onClick={startEdit}>
-          Editar
-        </button>
-        <button type="button" className="btn btn-small btn-danger" onClick={() => { map.closePopup(); onDelete(location); }}>
-          Eliminar
-        </button>
-      </div>
+      {canModify ? (
+        <div className="popup-actions">
+          <button type="button" className="btn btn-small" onClick={startEdit}>
+            Editar
+          </button>
+          <button type="button" className="btn btn-small btn-danger" onClick={() => { map.closePopup(); onDelete(location); }}>
+            Eliminar
+          </button>
+        </div>
+      ) : (
+        <p className="popup-meta">Registrado por {location.creadoPor?.nombre || '—'}. Solo su autor puede editarlo o eliminarlo.</p>
+      )}
     </div>
   );
 }
@@ -160,7 +164,7 @@ function ZonePopup({ zone, onCreateHere, onFilterZone, onDeleteZone }) {
 }
 
 export default function MapView({
-  locations, zones, categories, focus, activeZoneId, picking,
+  locations, zones, categories, focus, activeZoneId, picking, canModify,
   onMapClick, onSave, onDelete, onZoneDrawn, onFilterZone, onDeleteZone,
 }) {
   // Referencias a los marcadores por id, para abrir su popup desde la tabla
@@ -209,7 +213,7 @@ export default function MapView({
           ref={(m) => (m ? markerRefs.current.set(loc._id, m) : markerRefs.current.delete(loc._id))}
         >
           <Popup>
-            <LocationPopup location={loc} categories={categories} onSave={onSave} onDelete={onDelete} />
+            <LocationPopup location={loc} categories={categories} canModify={canModify(loc)} onSave={onSave} onDelete={onDelete} />
           </Popup>
         </Marker>
       ))}

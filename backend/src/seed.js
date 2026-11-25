@@ -29,7 +29,7 @@ async function run() {
 
   const cats = {};
   for (const c of data.categorias) {
-    cats[c.nombre] = await Category.findOneAndUpdate({ nombre: c.nombre }, c, opts);
+    cats[c.nombre] = await Category.findOneAndUpdate({ nombre: c.nombre }, { ...c, creadoPor: user._id }, opts);
   }
 
   const locs = {};

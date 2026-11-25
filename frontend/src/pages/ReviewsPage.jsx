@@ -7,12 +7,14 @@ import ReviewForm from '../components/ReviewForm';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { locationsApi, reviewsApi } from '../api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
 const formatDate = (iso) => new Date(iso).toLocaleDateString('es-MX', { dateStyle: 'medium' });
 
 export default function ReviewsPage() {
   const toast = useToast();
+  const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [locations, setLocations] = useState([]);
   const [placeFilter, setPlaceFilter] = useState('');
@@ -132,8 +134,12 @@ export default function ReviewsPage() {
                 <td data-label="Autor">{r.usuario?.nombre || '—'}</td>
                 <td data-label="Fecha">{formatDate(r.createdAt)}</td>
                 <td className="cell-actions">
-                  <button type="button" className="btn btn-small" onClick={() => setDraft({ review: r })}>Editar</button>
-                  <button type="button" className="btn btn-small btn-danger" onClick={() => askDelete(r)}>Eliminar</button>
+                  {r.usuario?._id === user.id && (
+                    <>
+                      <button type="button" className="btn btn-small" onClick={() => setDraft({ review: r })}>Editar</button>
+                      <button type="button" className="btn btn-small btn-danger" onClick={() => askDelete(r)}>Eliminar</button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

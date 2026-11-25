@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const Review = require('../models/Review');
 const Location = require('../models/Location');
 const AppError = require('../utils/AppError');
+const { ensureOwner } = require('../utils/ownership');
+
+const MSG_OWNER = 'Solo quien escribió esta reseña puede modificarla o eliminarla';
 
 const populate = [
   { path: 'usuario', select: 'nombre' },
@@ -30,16 +33,19 @@ exports.create = async ({ ubicacion, calificacion, comentario }, userId) => {
   return Review.findById(review._id).populate(populate);
 };
 
-exports.update = async (id, { calificacion, comentario }) => {
+exports.update = async (id, { calificacion, comentario }, userId) => {
   const review = await Review.findById(id);
   if (!review) throw new AppError('Reseña no encontrada', 404);
+  ensureOwner(review.usuario, userId, MSG_OWNER);
   if (calificacion !== undefined) review.calificacion = calificacion;
   if (comentario !== undefined) review.comentario = comentario;
   await review.save();
   return Review.findById(id).populate(populate);
 };
 
-exports.remove = async (id) => {
-  const review = await Review.findByIdAndDelete(id);
+exports.remove = async (id, userId) => {
+  const review = await Review.findById(id);
   if (!review) throw new AppError('Reseña no encontrada', 404);
+  ensureOwner(review.usuario, userId, MSG_OWNER);
+  await review.deleteOne();
 };

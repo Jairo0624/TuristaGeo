@@ -20,11 +20,11 @@ router.post('/', validateRoute, catchAsync(async (req, res) => {
 }));
 
 router.put('/:id', validateId, validateRoute, catchAsync(async (req, res) => {
-  res.status(200).json({ ok: true, data: await svc.update(req.params.id, req.body) });
+  res.status(200).json({ ok: true, data: await svc.update(req.params.id, req.body, req.user._id) });
 }));
 
 router.delete('/:id', validateId, catchAsync(async (req, res) => {
-  await svc.remove(req.params.id);
+  await svc.remove(req.params.id, req.user._id);
   res.status(200).json({ ok: true, message: 'Ruta eliminada' });
 }));
 

@@ -7,11 +7,15 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { categoriesApi } from '../api';
 import { categoryColor } from '../utils/markerIcon';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const NEW_CATEGORY = { nombre: '', descripcion: '', color: '#0ea5e9' };
 
 export default function CategoriesPage() {
   const toast = useToast();
+  const { user } = useAuth();
+  // Solo el autor edita o elimina (el backend lo exige con 403). Las anteriores sin autor quedan abiertas.
+  const canModify = (c) => !c.creadoPor || c.creadoPor._id === user.id;
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState(null); // { category? } al crear o editar
@@ -79,12 +83,13 @@ export default function CategoriesPage() {
               <th scope="col">Nombre</th>
               <th scope="col">Descripción</th>
               <th scope="col">Color</th>
+              <th scope="col">Creada por</th>
               <th scope="col"><span className="visually-hidden">Acciones</span></th>
             </tr>
           </thead>
           <tbody>
             {categories.length === 0 && !loading && (
-              <tr><td colSpan={4} className="empty">Aún no hay categorías.</td></tr>
+              <tr><td colSpan={5} className="empty">Aún no hay categorías.</td></tr>
             )}
             {categories.map((c) => (
               <tr key={c._id}>
@@ -94,9 +99,14 @@ export default function CategoriesPage() {
                   <span className="swatch" style={{ background: categoryColor(c) }} aria-hidden="true" />
                   {categoryColor(c)}
                 </td>
+                <td data-label="Creada por">{c.creadoPor?.nombre || '—'}</td>
                 <td className="cell-actions">
-                  <button type="button" className="btn btn-small" onClick={() => setDraft({ category: c })}>Editar</button>
-                  <button type="button" className="btn btn-small btn-danger" onClick={() => askDelete(c)}>Eliminar</button>
+                  {canModify(c) && (
+                    <>
+                      <button type="button" className="btn btn-small" onClick={() => setDraft({ category: c })}>Editar</button>
+                      <button type="button" className="btn btn-small btn-danger" onClick={() => askDelete(c)}>Eliminar</button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

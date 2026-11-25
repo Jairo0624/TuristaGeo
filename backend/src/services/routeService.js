@@ -1,6 +1,9 @@
 const Route = require('../models/Route');
 const Location = require('../models/Location');
 const AppError = require('../utils/AppError');
+const { ensureOwner } = require('../utils/ownership');
+
+const MSG_OWNER = 'Solo quien creó esta ruta puede modificarla o eliminarla';
 
 const populate = [
   {
@@ -32,9 +35,10 @@ exports.create = async ({ nombre, descripcion, duracion, ubicaciones = [] }, use
   return Route.findById(route._id).populate(populate);
 };
 
-exports.update = async (id, { nombre, descripcion, duracion, ubicaciones }) => {
+exports.update = async (id, { nombre, descripcion, duracion, ubicaciones }, userId) => {
   const route = await Route.findById(id);
   if (!route) throw new AppError('Ruta no encontrada', 404);
+  ensureOwner(route.creadoPor, userId, MSG_OWNER);
   if (nombre !== undefined) route.nombre = nombre;
   if (descripcion !== undefined) route.descripcion = descripcion;
   if (duracion !== undefined) route.duracion = duracion;
@@ -43,7 +47,9 @@ exports.update = async (id, { nombre, descripcion, duracion, ubicaciones }) => {
   return Route.findById(id).populate(populate);
 };
 
-exports.remove = async (id) => {
-  const route = await Route.findByIdAndDelete(id);
+exports.remove = async (id, userId) => {
+  const route = await Route.findById(id);
   if (!route) throw new AppError('Ruta no encontrada', 404);
+  ensureOwner(route.creadoPor, userId, MSG_OWNER);
+  await route.deleteOne();
 };

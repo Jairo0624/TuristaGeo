@@ -9,6 +9,7 @@ import { locationsApi, routesApi } from '../api';
 import { CANCUN_CENTER, CANCUN_ZOOM, pointToLatLng } from '../utils/geo';
 import { categoryColor, markerIcon } from '../utils/markerIcon';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 // Ajusta el mapa para que se vean todas las paradas de la ruta elegida
 function FitToRoute({ positions }) {
@@ -22,6 +23,7 @@ function FitToRoute({ positions }) {
 
 export default function RoutesPage() {
   const toast = useToast();
+  const { user } = useAuth();
   const [routes, setRoutes] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,10 +117,12 @@ export default function RoutesPage() {
                     ))}
                   </ol>
                   <p className="muted small">Creada por {r.creadoPor?.nombre || '—'}</p>
-                  <div className="popup-actions">
-                    <button type="button" className="btn btn-small" onClick={() => setDraft({ route: r })}>Editar</button>
-                    <button type="button" className="btn btn-small btn-danger" onClick={() => askDelete(r)}>Eliminar</button>
-                  </div>
+                  {r.creadoPor?._id === user.id && (
+                    <div className="popup-actions">
+                      <button type="button" className="btn btn-small" onClick={() => setDraft({ route: r })}>Editar</button>
+                      <button type="button" className="btn btn-small btn-danger" onClick={() => askDelete(r)}>Eliminar</button>
+                    </div>
+                  )}
                 </div>
               )}
             </li>
